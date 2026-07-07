@@ -32,10 +32,10 @@ mainLoop connection = do
 
     -- n <- [1 .. 26]
     -- -- let letter = getLetter n
-    -- return [drawGrid connection white (pixelAlphabet !! (n - 1)), void getLine]
+    -- return [drawGrid connection (pixelAlphabet !! (n - 1)), void getLine]
 
     -- sequence_ $
-    --     interleave (map (drawGrid connection white) grids) (repeat (threadDelay 50000))
+    --     interleave (map (drawGrid connection) grids) (repeat (threadDelay 50000))
 
     strobePads connection red
     strobePads connection blue

@@ -86,7 +86,7 @@ padToIndex :: Pad -> Int
 padToIndex (Pad x y _) = 10 * x + y
 
 updatePad :: Pad -> Colour -> IO ()
-updatePad p@(Pad x y c) colour = do
+updatePad p@(Pad _ _ c) colour = do
     let command = NoteOn (padToIndex p) colour
     let msg = MidiMessage 1 command
     send c msg
@@ -97,6 +97,9 @@ fillColour connection colour = sequence_ $ do
     y <- [1 .. 8]
     return $ updatePad (Pad x y connection) colour
 
+toColour :: Colour -> Grid -> Grid
+toColour colour (Grid w h entries) = Grid w h (map (map (\c -> if c == blank then blank else colour)) entries)
+
 clearPads :: Connection -> IO ()
 clearPads connection = fillColour connection blank
 
@@ -106,14 +109,11 @@ strobePads connection colour = sequence_ $ concat $ do
     pad <- pads
     return [updatePad pad colour, threadDelay 20000]
 
-drawGrid :: Connection -> Colour -> Grid -> IO ()
-drawGrid connection colour (Grid _ _ entries) =
+drawGrid :: Connection -> Grid -> IO ()
+drawGrid connection (Grid _ _ entries) =
     sequence_ $
         do
             x <- [1 .. 8]
             y <- [1 .. 8]
-            if blank /= (entries !! (y - 1)) !! (x - 1)
-                then
-                    return $ updatePad (Pad x y connection) colour
-                else
-                    return $ updatePad (Pad x y connection) blank
+            let entry = (entries !! (y - 1)) !! (x - 1)
+            return $ updatePad (Pad x y connection) entry

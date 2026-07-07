@@ -18,7 +18,7 @@ letterPos c = ord (toUpper c) - 64
 
 drawWord :: Connection -> Colour -> String -> IO ()
 drawWord connection colour word =
-    sequence_ $ interleave (replicate (1 + length word) $ void (threadDelay 200000)) $ map (\n -> drawGrid connection colour (pixelAlphabet !! n)) $ map letterPos word
+    sequence_ $ interleave (replicate (1 + length word) $ void (threadDelay 200000)) $ map (\n -> drawGrid connection (toColour colour (pixelAlphabet !! n))) $ map letterPos word
 
 -- return [drawGrid connection white (pixelAlphabet !! (n - 1)), void getLine]
 
