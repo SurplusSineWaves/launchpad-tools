@@ -37,10 +37,12 @@ mainLoop connection = do
     -- sequence_ $
     --     interleave (map (drawGrid connection) grids) (repeat (threadDelay 50000))
 
-    strobePads connection red
-    strobePads connection blue
-    strobePads connection green
-    mainLoop connection
+    -- strobePads connection red
+    -- strobePads connection blue
+    -- strobePads connection green
+    -- mainLoop connection
+
+    scrollGridVertical connection (wordToGridVertical white "Hi Reuben")
 
 main :: IO ()
 main = do

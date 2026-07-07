@@ -7,7 +7,7 @@ import System.MIDI
 import System.MIDI.Utility
 
 -- Grid has a width, height, and then its entries
-data Grid = Grid Int Int [[Colour]]
+data Grid = Grid Int Int [[Colour]] deriving (Show)
 
 interleave :: [a] -> [a] -> [a]
 interleave [] ys = ys
@@ -20,6 +20,12 @@ readGridValue (Grid w h entries) x y =
   where
     (x', y') = (x `mod` w, y `mod` h)
     (x'', y'') = (if x' == 0 then w else x', if y' == 0 then h else y')
+
+blankRow :: Grid
+blankRow = Grid 8 1 [replicate 8 blank]
+
+blankCol :: Grid
+blankCol = Grid 1 8 $ replicate 8 [blank]
 
 sumNeighbours :: Grid -> Int -> Int -> Int
 sumNeighbours grid x y =
@@ -93,8 +99,8 @@ updatePad p@(Pad _ _ c) colour = do
 
 fillColour :: Connection -> Colour -> IO ()
 fillColour connection colour = sequence_ $ do
-    x <- [1 .. 8]
-    y <- [1 .. 8]
+    x <- [0 .. 9]
+    y <- [0 .. 9]
     return $ updatePad (Pad x y connection) colour
 
 toColour :: Colour -> Grid -> Grid
@@ -109,11 +115,32 @@ strobePads connection colour = sequence_ $ concat $ do
     pad <- pads
     return [updatePad pad colour, threadDelay 20000]
 
+-- Draws the first 8x8 portion of a grid
 drawGrid :: Connection -> Grid -> IO ()
-drawGrid connection (Grid _ _ entries) =
+drawGrid connection grid = drawGridAtPos connection grid 1 1
+
+drawGridAtPos :: Connection -> Grid -> Int -> Int -> IO ()
+drawGridAtPos connection (Grid _ _ entries) x y =
     sequence_ $
         do
-            x <- [1 .. 8]
-            y <- [1 .. 8]
-            let entry = (entries !! (y - 1)) !! (x - 1)
-            return $ updatePad (Pad x y connection) entry
+            x' <- [1 .. 8]
+            y' <- [1 .. 8]
+            let entry = (entries !! (y + y' - 2)) !! (x + x' - 2)
+            return $ updatePad (Pad x' y' connection) entry
+
+-- Scrolls across a grid that is wider than 8 pads
+scrollGridHorizontal :: Connection -> Grid -> IO ()
+scrollGridHorizontal connection grid@(Grid w _ _) = sequence_ $ concat $ do
+    x <- [1 .. (w - 7)]
+    return [drawGridAtPos connection grid x 1, threadDelay 200000]
+
+scrollGridVertical :: Connection -> Grid -> IO ()
+scrollGridVertical connection grid@(Grid _ h _) = sequence_ $ concat $ do
+    y <- [1 .. (h - 7)]
+    return [drawGridAtPos connection grid 1 y, threadDelay 100000]
+
+joinGridsVertical :: Grid -> Grid -> Grid
+joinGridsVertical (Grid w1 h1 entries1) (Grid w2 h2 entries2) = case () of
+    _
+        | w1 /= w2 -> error "Widths of added grids do not agree"
+        | otherwise -> Grid w1 (h1 + h2) (entries1 ++ entries2)
