@@ -7,14 +7,14 @@ import System.MIDI
 import System.MIDI.Utility
 
 -- Grid has a width, height, and then its entries
-data Grid = Grid Int Int [[Bool]]
+data Grid = Grid Int Int [[Colour]]
 
 interleave :: [a] -> [a] -> [a]
 interleave [] ys = ys
 interleave xs [] = xs
 interleave (x : xt) (y : yt) = x : y : interleave xt yt
 
-readGridValue :: Grid -> Int -> Int -> Bool
+readGridValue :: Grid -> Int -> Int -> Colour
 readGridValue (Grid w h entries) x y =
     (entries !! (x'' - 1)) !! (y'' - 1)
   where
@@ -25,7 +25,7 @@ sumNeighbours :: Grid -> Int -> Int -> Int
 sumNeighbours grid x y =
     length $
         filter
-            id
+            (/= blank)
             [ readGridValue grid (x + 1) (y + 1)
             , readGridValue grid (x + 1) (y - 1)
             , readGridValue grid (x - 1) (y + 1)
@@ -42,14 +42,14 @@ updateGrid grid@(Grid w h entries) = Grid w h $ chunksOf h $ do
     y <- [1 .. h]
     let alive = readGridValue grid x y
     let count = sumNeighbours grid x y
-    return $ case alive of
+    return $ case alive == blank of
         True
-            | count < 2 -> False
-            | count > 3 -> False
-            | otherwise -> True
+            | count == 3 -> white
+            | otherwise -> blank
         False
-            | count == 3 -> True
-            | otherwise -> False
+            | count < 2 -> blank
+            | count > 3 -> blank
+            | otherwise -> white
 
 progMode :: [Word8]
 progMode = [0x00, 0x20, 0x29, 0x02, 0x0E, 0x00, 0x11, 0x00, 0x00]
@@ -112,7 +112,7 @@ drawGrid connection colour (Grid _ _ entries) =
         do
             x <- [1 .. 8]
             y <- [1 .. 8]
-            if (entries !! (y - 1)) !! (x - 1)
+            if blank /= (entries !! (y - 1)) !! (x - 1)
                 then
                     return $ updatePad (Pad x y connection) colour
                 else

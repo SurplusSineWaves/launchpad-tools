@@ -6,9 +6,9 @@ import Data.Char
 import Library
 import System.MIDI
 
-t, f :: Bool
-t = True
-f = False
+t, f :: Colour
+t = white
+f = blank
 
 getLetter :: Int -> Char
 getLetter n = chr (n + 64)
@@ -18,7 +18,7 @@ letterPos c = ord (toUpper c) - 64
 
 drawWord :: Connection -> Colour -> String -> IO ()
 drawWord connection colour word =
-    sequence_ $ interleave (replicate (1 + length word) $ void (threadDelay 500000)) $ map (\n -> drawGrid connection colour (pixelAlphabet !! n)) $ map letterPos word
+    sequence_ $ interleave (replicate (1 + length word) $ void (threadDelay 200000)) $ map (\n -> drawGrid connection colour (pixelAlphabet !! n)) $ map letterPos word
 
 -- return [drawGrid connection white (pixelAlphabet !! (n - 1)), void getLine]
 
